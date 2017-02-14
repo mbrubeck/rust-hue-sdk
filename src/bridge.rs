@@ -33,20 +33,19 @@ pub fn discover() -> HashSet<SocketAddr> {
     loop {
         let mut buf = [0;255];
         let sockread = match socket.recv_from(&mut buf) {
-            Ok(val) => Ok(val),
-                Err(e) => {
-                    match e.kind() {
-                        // a timeout on unix is considered a WouldBlock
-                        std::io::ErrorKind::WouldBlock => break,
-                        _ => panic!(e),
-                    }
-                    Err(e)
+            Ok(val) => val,
+            Err(e) => {
+                match e.kind() {
+                    // a timeout on unix is considered a WouldBlock
+                    std::io::ErrorKind::WouldBlock => break,
+                    _ => panic!(e),
                 }
+            }
         };
         let _ = str::from_utf8(&buf).and_then(|s| {
             // Hue docs say to use "IpBridge" over "hue-bridgeid"
             if s.contains("IpBridge") {
-                let bridge = sockread.unwrap().1;
+                let bridge = sockread.1;
                 bridges.insert(bridge);
             }
             Ok(s)
